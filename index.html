@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AurenT Market</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f8f8fb;color:#172033}
+header{position:sticky;top:0;z-index:20;background:white;padding:14px 18px;display:flex;justify-content:space-between;box-shadow:0 2px 10px #0001}
+.logo{font-size:26px;font-weight:900;color:#5c2e68}.cart,.add,.buy{border:0;border-radius:12px;background:#172033;color:white;padding:10px 14px;font-weight:bold}
+.vocaloid{background:linear-gradient(135deg,#164c93,#2d79c9);color:white;padding:24px 14px}
+.wrap,main{max-width:1050px;margin:auto}.badge{background:#18549b;padding:8px 12px;border-radius:10px;font-weight:bold}
+.scroll{display:flex;gap:15px;overflow-x:auto;padding:8px 2px 15px;scroll-snap-type:x mandatory}
+.card{background:white;color:#172033;border-radius:18px;overflow:hidden;flex:0 0 280px;scroll-snap-align:start;box-shadow:0 6px 18px #0002}
+.card img,.product img{width:100%;display:block;object-fit:cover}.card img{height:230px}.card .body,.product .body{padding:14px}
+.add{width:100%;margin-top:10px;background:#7467e8}main{padding:30px 14px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.product{background:white;border-radius:18px;overflow:hidden;box-shadow:0 8px 20px #0001}.product img{aspect-ratio:4/5}
+.price{font-weight:900;font-size:18px}footer{text-align:center;padding:30px;background:#172033;color:white}
+#drawer{display:none;position:fixed;inset:0;background:#0007;z-index:100}#drawer.open{display:block}
+.panel{background:white;position:absolute;right:0;top:0;height:100%;width:min(400px,94vw);padding:20px;overflow:auto}
+.item{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid #eee}.item img{width:60px;height:75px;object-fit:cover;border-radius:10px}
+.qty{display:flex;gap:8px;margin-top:8px}.qty button{border:0;padding:6px 10px;border-radius:8px}.buy{width:100%;margin-top:12px;font-size:17px}
+@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:480px){.grid{grid-template-columns:1fr}.card{flex-basis:82vw}}
+</style>
+</head>
+<body>
+<header><div class="logo">AurenT</div><button class="cart" onclick="openCart()">🛒 Sepet (<span id="count">0</span>)</button></header>
+
+<section class="vocaloid"><div class="wrap">
+<span class="badge">🎤 YENİ SERİ · SINIRLI SAYIDA</span>
+<h1>Vocaloid Sütleri</h1><p>Yana kaydırarak keşfet.</p>
+<div class="scroll" id="vocaloid"></div>
+</div></section>
+
+<main><h2>🥛 AurenT Sütleri</h2><p>Diğer özel sütlerimiz</p><div class="grid" id="normal"></div></main>
+<footer>AurenT · Özel süt ürünleri</footer>
+
+<div id="drawer" onclick="if(event.target===this)closeCart()"><div class="panel">
+<h2>Sepetim <button onclick="closeCart()">✕</button></h2>
+<div id="cart-list"></div><h3 id="total">0,00 TL</h3>
+<button class="buy" onclick="satınAl()">🛍️ Satın Al</button>
+</div></div>
+
+<script>
+function makeImg(title,color,emoji){
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="700" height="700"><rect width="700" height="700" rx="50" fill="'+color+'"/><rect x="120" y="100" width="460" height="500" rx="35" fill="white"/><text x="350" y="340" text-anchor="middle" font-size="120">'+emoji+'</text><text x="350" y="450" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="#172033">'+title+'</text></svg>';
+ return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
+}
+const P=[
+{id:"miku",n:"Miku Sütü",p:144.99,c:"#39c8d8",e:"🎤",v:1},
+{id:"teto",n:"Teto Sütü",p:144.99,c:"#ef6a91",e:"🎀",v:1},
+{id:"neru",n:"Neru Sütü",p:144.99,c:"#f0c52e",e:"⭐",v:1},
+{id:"femboy",n:"Femboy Süt",p:59.99,c:"#8e6ad8",e:"💜"},
+{id:"tomboy",n:"Tomboy Süt",p:59.99,c:"#e46a4f",e:"🔥"},
+{id:"anime",n:"Anime Kızı Sütü",p:69.99,c:"#ff86b7",e:"🌸"}
+];
+P.forEach(x=>x.img=makeImg(x.n,x.c,x.e));
+let C={};try{C=JSON.parse(localStorage.getItem("cart")||"{}")}catch(e){}
+const money=x=>x.toLocaleString("tr-TR",{minimumFractionDigits:2})+" TL";
+function card(p){return '<article class="card"><img src="'+p.img+'"><div class="body"><h3>'+p.n+'</h3><div class="price">'+money(p.p)+'</div><button class="add" onclick="add(''+p.id+'')">Sepete Ekle</button></div></article>'}
+function normal(p){return '<article class="product"><img src="'+p.img+'"><div class="body"><h3>'+p.n+'</h3><div class="price">'+money(p.p)+'</div><button class="add" onclick="add(''+p.id+'')">Sepete Ekle</button></div></article>'}
+document.getElementById("vocaloid").innerHTML=P.filter(p=>p.v).map(card).join("");
+document.getElementById("normal").innerHTML=P.filter(p=>!p.v).map(normal).join("");
+function save(){localStorage.setItem("cart",JSON.stringify(C))}
+function add(id){C[id]=(C[id]||0)+1;save();render();openCart()}
+function change(id,d){C[id]=(C[id]||0)+d;if(C[id]<=0)delete C[id];save();render()}
+function render(){
+ let n=Object.values(C).reduce((a,b)=>a+b,0),total=0,html="";
+ document.getElementById("count").textContent=n;
+ for(const id in C){const p=P.find(x=>x.id===id);if(!p)continue;total+=p.p*C[id];
+ html+='<div class="item"><img src="'+p.img+'"><div><b>'+p.n+'</b><br>'+money(p.p)+'<div class="qty"><button onclick="change(''+id+'',-1)">−</button>'+C[id]+'<button onclick="change(''+id+'',1)">+</button></div></div></div>'}
+ document.getElementById("cart-list").innerHTML=html||"<p>Sepetiniz boş.</p>";document.getElementById("total").textContent=money(total);
+}
+function openCart(){document.getElementById("drawer").classList.add("open");render()}
+function closeCart(){document.getElementById("drawer").classList.remove("open")}
+function satınAl(){if(!Object.keys(C).length){alert("🛒 Sepetiniz boş!");return}alert("✅ Siparişiniz alınmıştır!\n\nAurenT'yi tercih ettiğiniz için teşekkürler! 💙");C={};save();render();closeCart()}
+render();
+</script>
+</body></html>
